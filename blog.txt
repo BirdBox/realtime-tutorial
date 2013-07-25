@@ -1,6 +1,6 @@
 How to implement simple, cross-platform, realtime communication with Node.js, SockJS, and SocketRocket
 
-One of the technical challenges we have faced at Birdbox has been developing a rich, realtime experience that works across multiple platforms, maintaining data consistency and scalability. Thanks to the hard work of others, we can stand on the shoulders of giants to achieve this task, using the same infrastructure to push data both to the browser and to a native iPhone app in real time. In this article, I'll show you how to build a realtime echo server called Warble that works both in the browser and natively on iOS.
+One of the problems I've had the most fun working on at Birdbox has been developing a rich, realtime experience that works across multiple platforms, maintaining data consistency and scalability. Thanks to the hard work of others, we can stand on the shoulders of giants to achieve this task, using the same infrastructure to push data both to the browser and to a native iPhone app in real time. In this article, I'll show you how to build a realtime echo server called Warble that works both in the browser and natively on iOS.
 
 Our basic realtime infrastructure looks like this:
 
@@ -8,7 +8,7 @@ A Node.js server using sockjs-node. To follow along with the tutorial, make sure
 A Backbone.js web application making use of sockjs-client
 An iPhone app using SocketRocket
 
-The node app server is pretty simple. We set up a package.json file to grab sockjs-node:
+The node app server is pretty simple. We will be using SockJS -- a websocket emulation layer (what the heck does that mean?) -- it means that it provides an HTML5 Web Socket compliant API, but doesn't necessarily use the same mechanisms under the hood. The reason for this is that we still live in a world where not all browsers are created equal and many people are still using older browsers. Sockjs-node is the server component of our setup, so let's set up a package.json file to install it:
 
 {
   "name": "WarbleServer",
@@ -18,21 +18,78 @@ The node app server is pretty simple. We set up a package.json file to grab sock
   }
 }
 
-We then run npm install to install the dependency and set it up to listen at localhost:5555/warble for incoming data. Whenever it gets a message, it simply echos it back out.
+We then run npm install to install the dependency and set it up to listen at localhost:5555/warble for incoming data. Whenever it gets a message, it simply echoes it back out.
+
+#!/usr/bin/env node
 
 var http = require('http'),
     sockjs = require('sockjs'),
-    warble = sockjs.createServer();
+    warble = sockjs.createServer(),
+    connections = [];
 
 warble.on('connection', function(conn) {
+  console.log('Got connection');
+  connections.push(conn);
   conn.on('data', function(message) {
-    conn.write(message);
+    console.log('Got data: ' + message);
+    // write the message to all connected clients
+    for (var i=0; i<connections.length; i++) {
+      connections[i].write(message);
+    }
   });
-  conn.on('close', function() {});
+  conn.on('close', function() {
+    connections.splice(connections.indexOf(conn), 1); // remove the connection
+    console.log('Lost connection');
+  });
 });
 
 var server = http.createServer();
-echo.installHandlers(server, {prefix:'/warble'});
+warble.installHandlers(server, {prefix:'/warble'});
 server.listen(5555, '0.0.0.0');
 
-To run the server
+So, what is that doing? Let's walk through it a little bit. We let SockJS do all the hard work of creating a web socket server with the call to sockjs.createServer, and then all we need to do is add some handlers for things that might happen, like a client connecting (warble.on('connection', function() ...), disconnecting (conn.on('close', function()...), or sending us a message. (conn.on('data', function()...). In this case, when a client connects, we push it into an array to keep track of it. When we get a message, we iterate over that array and send the received message to all connected clients. When a client disconnects, we remove them from the array. Pretty simple!
+
+To run the server, we run node warble.js. Sweet!  Let's move on to the clients.
+
+Sockjs has another project, called sockjs-client for use in the browser. When HTML5 web sockets are available in the browser, it uses those. If they are not, it emulates a web socket using JSONP, long polling, or whatever mechanism the browser *does* support. Pretty awesome. Here's the Javascript for our browser client:
+
+(function() {
+  // Initialize the socket & handlers
+  var connectToServer = function() {
+    var warbleSocket = new SockJS('http://localhost:5555/warble');
+
+    warbleSocket.onopen = function() {
+      clearInterval(connectRetry);
+      $('.connect-status')
+        .removeClass('disconnected')
+        .addClass('connected')
+        .text('Connected');
+    };
+
+    warbleSocket.onmessage = function(e) {
+      $('#warble-msg').text(e.data);
+    };
+
+    warbleSocket.onclose = function() {
+      clearInterval(connectRetry);
+      connectRetry = setInterval(connectToServer, 1000);
+      $('.connect-status')
+        .removeClass('connected')
+        .addClass('disconnected')
+        .text('Disconnected');
+    };
+
+    // Connect the text field to the socket
+    $('.msg-sender').off('input').on('input', function() {
+      warbleSocket.send($('.msg-sender input').val()); 
+    });
+  };
+
+  var connectRetry = setInterval(connectToServer, 1000);
+})();
+
+All we're doing here is defining a SockJS client that updates the browser page when certain events happen (connect, disconnect, message received) and that echoes any input the user enters into a form back out to the server. Note that you must have jQuery and SockJS included for this to work, as well as the relevant DOM elements to update and listen to. All of the code for this tutorial is on GitHub at (LINK). The setInterval and clearInterval bit just tries to reconnect to the server if for some reason the connection is lost.
+
+Let's move on to the iPhone app. Unfortunately, there is no SockJS library for Objective-C, but using the Websocket-compliant SocketRocket (LINK) library, it's still pretty simple. To include SocketRocket in your iOS project, go to the SocketRocket GitHub page and click 'Download ZIP'. Unzip the files and move the SocketRocket/ folder to your iOS directory structure, then right click in the XCode Project Navigator. You will need to add the -ObjC flag to "Other Linker Flags" in your Build Settings (screenshot), and as mentioned on the SocketRocket GitHub page, you'll need to add libicucore.dylib, CFNetwork.framework, and Security.framework to your project libraries (screenshot).
+
+Import "SRWebSocket.h" into your class and implement the SRWebSocketDelegateProtocol to properly implement handlers for the various events.
