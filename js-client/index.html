@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Warble Warble!</title>
+  <link rel="stylesheet" type="text/css" href="style.css"></link> 
+</head>
+<body>
+  <div class="status">
+    <h2>Status: <span class="connect-status disconnected">Disconnected</span></h2>
+  </div>
+  <h3 id="warble-msg"></h3>
+  <form class="msg-sender">
+    <input type="text" placeholder="Foozbar"></input>
+  </form>
+
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/sockjs-client/0.3.4/sockjs.min.js"></script>
+  <script src="warble.js"></script>
+</body>
+</html>

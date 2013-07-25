@@ -1,0 +1,7 @@
+{
+  "name": "WarbleServer",
+  "version": "0.0.1",
+  "dependencies": {
+    "sockjs": "~0.3.7"
+  }
+}

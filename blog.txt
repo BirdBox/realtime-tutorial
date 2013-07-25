@@ -1,0 +1,38 @@
+How to implement simple, cross-platform, realtime communication with Node.js, SockJS, and SocketRocket
+
+One of the technical challenges we have faced at Birdbox has been developing a rich, realtime experience that works across multiple platforms, maintaining data consistency and scalability. Thanks to the hard work of others, we can stand on the shoulders of giants to achieve this task, using the same infrastructure to push data both to the browser and to a native iPhone app in real time. In this article, I'll show you how to build a realtime echo server called Warble that works both in the browser and natively on iOS.
+
+Our basic realtime infrastructure looks like this:
+
+A Node.js server using sockjs-node. To follow along with the tutorial, make sure you have Node.js installed (LINK).
+A Backbone.js web application making use of sockjs-client
+An iPhone app using SocketRocket
+
+The node app server is pretty simple. We set up a package.json file to grab sockjs-node:
+
+{
+  "name": "WarbleServer",
+  "version": "0.0.1",
+  "dependencies": {
+    "sockjs": "~0.3.7"
+  }
+}
+
+We then run npm install to install the dependency and set it up to listen at localhost:5555/warble for incoming data. Whenever it gets a message, it simply echos it back out.
+
+var http = require('http'),
+    sockjs = require('sockjs'),
+    warble = sockjs.createServer();
+
+warble.on('connection', function(conn) {
+  conn.on('data', function(message) {
+    conn.write(message);
+  });
+  conn.on('close', function() {});
+});
+
+var server = http.createServer();
+echo.installHandlers(server, {prefix:'/warble'});
+server.listen(5555, '0.0.0.0');
+
+To run the server
