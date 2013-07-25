@@ -92,4 +92,10 @@ All we're doing here is defining a SockJS client that updates the browser page w
 
 Let's move on to the iPhone app. Unfortunately, there is no SockJS library for Objective-C, but using the Websocket-compliant SocketRocket (LINK) library, it's still pretty simple. To include SocketRocket in your iOS project, go to the SocketRocket GitHub page and click 'Download ZIP'. Unzip the files and move the SocketRocket/ folder to your iOS directory structure, then right click in the XCode Project Navigator. You will need to add the -ObjC flag to "Other Linker Flags" in your Build Settings (screenshot), and as mentioned on the SocketRocket GitHub page, you'll need to add libicucore.dylib, CFNetwork.framework, and Security.framework to your project libraries (screenshot).
 
-Import "SRWebSocket.h" into your class and implement the SRWebSocketDelegateProtocol to properly implement handlers for the various events.
+Import "SRWebSocket.h" into your class and implement the SRWebSocketDelegateProtocol so you can properly implement handlers for the various events, and then set up an SRWebSocket and assign its delegate to self (this step connects the web socket events with your handlers):
+
+self.warbleSocket = [[SRWebSocket alloc] initWithURL:[[NSURL alloc] initWithString:@"http://localhost:5555/warble/websocket"]];
+self.warbleSocket.delegate = self;
+[self.warbleSocket open];
+
+Note that when you provide the URL to our SockJS server that you include /websocket after the rest of the path
