@@ -1,4 +1,5 @@
-# Building a real-time infrastructure between a Node.js server, a SockJS browser client, and a SocketRocket iOS client #
+# Birdbox realtime tutorial #
+## Building a real-time infrastructure between a Node.js server, a SockJS browser client, and a SocketRocket iOS client ##
 
 This is the code for the [tutorial, which can be found here](http://blog.birdbox.com).
 
