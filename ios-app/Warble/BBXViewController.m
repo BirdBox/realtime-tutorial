@@ -11,6 +11,7 @@
 @interface BBXViewController ()
     @property (weak, nonatomic) IBOutlet UITextView *serverMessage;
     @property (weak, nonatomic) IBOutlet UITextField *input;
+    @property (weak, nonatomic) IBOutlet UILabel *connectStatus;
 
     @property (nonatomic, readwrite) SRWebSocket *warbleSocket;
     @property (nonatomic, readwrite) BOOL socketReady;
@@ -37,13 +38,10 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
 }
-
-- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
-{
+- (IBAction)textFieldDidChange:(id)sender {
     if (self.socketReady) {
-        [self.warbleSocket send:[NSString stringWithFormat:@"%@%@", self.input.text, string]];
+        [self.warbleSocket send:self.input.text];
     }
-    return YES;
 }
 
 - (void)didReceiveMemoryWarning
@@ -61,10 +59,14 @@
 - (void)webSocketDidOpen:(SRWebSocket *)webSocket
 {
     self.socketReady = YES;
+    self.connectStatus.text = @"Connected";
+    self.connectStatus.textColor = [UIColor greenColor];
 }
 
 - (void)webSocket:(SRWebSocket *)webSocket didCloseWithCode:(NSInteger)code reason:(NSString *)reason wasClean:(BOOL)wasClean
 {
     self.socketReady = NO;
+    self.connectStatus.text = @"Disconnected";
+    self.connectStatus.textColor = [UIColor redColor];
 }
 @end

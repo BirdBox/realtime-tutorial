@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "SRWebSocket.h"
 
-@interface BBXViewController : UIViewController <UITextFieldDelegate, SRWebSocketDelegate>
+@interface BBXViewController : UIViewController <SRWebSocketDelegate>
 
 @end

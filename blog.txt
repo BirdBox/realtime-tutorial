@@ -98,4 +98,10 @@ self.warbleSocket = [[SRWebSocket alloc] initWithURL:[[NSURL alloc] initWithStri
 self.warbleSocket.delegate = self;
 [self.warbleSocket open];
 
-Note that when you provide the URL to our SockJS server that you include /websocket after the rest of the path
+Note that when you provide the URL to our SockJS server it is very important that you include /websocket after the rest of the path, as that tells SockJS you just want a raw websocket. At that point, you can just hook up your text input events to call [self.warbleSocket send:self.input.text] and define the didReceiveMessage callback to update your TextView.
+
+I skipped a lot of stuff for iOS for the sake of brevity, but fear not! The full source code is available on GitHub at: (LINK).
+
+Check it out!
+
+(VIDEO)
